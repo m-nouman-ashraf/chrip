@@ -7,6 +7,8 @@ import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import { RouterOutputs, api } from "~/utils/api";
 import Image from "next/image";
+import { LoadingPage } from "~/components/Loader";
+import { NextPage } from "next";
 
 dayjs.extend(relativeTime);
 const CreatePostWizard = () => {
@@ -57,13 +59,26 @@ const PostView = (props: PostWithUser) => {
   );
 };
 
-export default function Home() {
-  const user = useUser();
-  console.log(user);
-  const { data, isLoading } = api.posts.getAll.useQuery();
+const Feed = () => {
+  const { data, isLoading: postLoading } = api.posts.getAll.useQuery();
 
-  if (isLoading) return <div>Loading......</div>;
-  if (!data) return <div>Something went wrong</div>;
+  if (postLoading) return <LoadingPage />;
+
+  if (!data) return <div>Some thing went wrong....</div>;
+  return (
+    <div className="flex flex-col">
+      {[...data, ...data]?.map((fullPost) => (
+        <PostView {...fullPost} key={fullPost.post.id} />
+      ))}
+    </div>
+  );
+};
+
+const Home: NextPage = () => {
+  const { isLoaded: userLoaded, isSignedIn } = useUser();
+  api.posts.getAll.useQuery();
+
+  if (!userLoaded) return <div />;
   return (
     <>
       <Head>
@@ -74,21 +89,19 @@ export default function Home() {
       <main className="flex h-screen justify-center">
         <div className="w-full border-x border-slate-400 md:max-w-2xl">
           <div className="flex border-b border-slate-400 p-4">
-            {!user.isSignedIn && (
+            {!isSignedIn && (
               <div className="flex justify-center">
                 <SignInButton />
               </div>
             )}
-            {user.isSignedIn && <CreatePostWizard />}
+            {isSignedIn && <CreatePostWizard />}
             <SignIn />
           </div>
-          <div className="flex flex-col">
-            {[...data, ...data]?.map((fullPost) => (
-              <PostView {...fullPost} key={fullPost.post.id} />
-            ))}
-          </div>
+          <div className="flex flex-col">{<Feed />}</div>
         </div>
       </main>
     </>
   );
-}
+};
+
+export default Home;
