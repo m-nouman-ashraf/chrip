@@ -5,11 +5,12 @@ import Link from "next/link";
 import { number } from "zod";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
-import { RouterOutputs, api } from "~/utils/api";
+import { type RouterOutputs, api } from "~/utils/api";
 import Image from "next/image";
-import { LoadingPage } from "~/components/Loader";
-import { NextPage } from "next";
+import { LoadingPage, LoadingSpiner } from "~/components/Loader";
+import { type NextPage } from "next";
 import { useState } from "react";
+import toast from "react-hot-toast";
 
 dayjs.extend(relativeTime);
 const CreatePostWizard = () => {
@@ -21,6 +22,16 @@ const CreatePostWizard = () => {
     onSuccess: () => {
       setInputValue("");
       void ctx.invalidate();
+    },
+    onError: (e) => {
+      const errorMessage = e.data?.zodError?.fieldErrors.content;
+      if (errorMessage?.[0]) {
+        toast.error(errorMessage[0]);
+      } else {
+        toast.error("Faild To Post! Please try again later");
+      }
+
+      setInputValue("");
     },
   });
   if (!user) return null;
@@ -42,7 +53,27 @@ const CreatePostWizard = () => {
         value={inputValue}
         onChange={(e) => setInputValue(e.target.value)}
       />
-      <button onClick={() => mutate({ content: inputValue })}>Post</button>
+      {inputValue !== "" && !isPosting && (
+        <button
+          onClick={() => mutate({ content: inputValue })}
+          disabled={isPosting}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              if (inputValue !== "") {
+                mutate({ content: inputValue });
+              }
+            }
+          }}
+        >
+          Post
+        </button>
+      )}
+      {isPosting && (
+        <div className="flex items-center justify-center">
+          <LoadingSpiner size={20} />
+        </div>
+      )}
     </div>
   );
 };
