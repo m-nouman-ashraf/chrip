@@ -9,11 +9,20 @@ import { RouterOutputs, api } from "~/utils/api";
 import Image from "next/image";
 import { LoadingPage } from "~/components/Loader";
 import { NextPage } from "next";
+import { useState } from "react";
 
 dayjs.extend(relativeTime);
 const CreatePostWizard = () => {
+  const [inputValue, setInputValue] = useState("");
   const { user } = useUser();
 
+  const ctx = api.useContext();
+  const { mutate, isLoading: isPosting } = api.posts.create.useMutation({
+    onSuccess: () => {
+      setInputValue("");
+      void ctx.invalidate();
+    },
+  });
   if (!user) return null;
 
   return (
@@ -28,7 +37,12 @@ const CreatePostWizard = () => {
       <input
         placeholder="Type some emojis"
         className="grow bg-transparent outline-none"
+        type="text"
+        disabled={isPosting}
+        value={inputValue}
+        onChange={(e) => setInputValue(e.target.value)}
       />
+      <button onClick={() => mutate({ content: inputValue })}>Post</button>
     </div>
   );
 };
@@ -67,7 +81,7 @@ const Feed = () => {
   if (!data) return <div>Some thing went wrong....</div>;
   return (
     <div className="flex flex-col">
-      {[...data, ...data]?.map((fullPost) => (
+      {data?.map((fullPost) => (
         <PostView {...fullPost} key={fullPost.post.id} />
       ))}
     </div>
