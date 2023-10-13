@@ -1,0 +1,37 @@
+name: Node.js CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+env:
+  DATABASE_URL: "https://fake.com"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: 14
+
+      - name: Install Node.js dependencies
+        run: npm install
+
+      - name: Run TypeScript compilation
+        run: npm run build
+
+      - name: Type checking
+        run: npx tsc --noEmit
+
+      - name: Run linting
+        run: npm run lint
