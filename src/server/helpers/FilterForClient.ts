@@ -1,8 +1,12 @@
 import { User } from "@clerk/nextjs/dist/types/api";
-export const filterUserFromClient = (user: User) => {
+export const filterUserForClient = (user: User) => {
   return {
     id: user.id,
     username: user.username,
-    imageUrl: user.imageUrl,
+    profileImageUrl: user.imageUrl,
+    externalUsername:
+      user.externalAccounts.find(
+        (externalAccount) => externalAccount.provider === "oauth_github",
+      )?.username ?? null,
   };
 };
